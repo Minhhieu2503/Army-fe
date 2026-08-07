@@ -89,12 +89,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
 
   const [isQuestionFormOpen, setIsQuestionFormOpen] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [questionForm, setQuestionForm] = useState<Partial<Question>>({
     text: '',
     options: ['', '', '', ''],
     correctOption: 0,
     explanation: ''
   });
+
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; type: 'info' | 'success' | 'error' }>({
+    isOpen: false,
+    message: '',
+    type: 'info'
+  });
+  
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; message: string; onConfirm: (() => void) | null }>({
+    isOpen: false,
+    message: '',
+    onConfirm: null
+  });
+
+  const showAlert = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+    setAlertModal({ isOpen: true, message, type });
+  };
+
+  const showConfirm = (message: string, onConfirm: () => void) => {
+    setConfirmModal({ isOpen: true, message, onConfirm });
+  };
 
   // System Time State (HHMM.SS)
   const [sysTime, setSysTime] = useState('0743.00');
@@ -163,14 +184,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
+        showAlert(data.message, 'success');
         fetchData();
       } else {
-        alert(data.message || 'Lỗi khi cập nhật vai trò.');
+        showAlert(data.message || 'Lỗi khi cập nhật vai trò.', 'error');
       }
     } catch (error) {
       console.error('Error updating user role:', error);
-      alert('Không thể kết nối đến máy chủ.');
+      showAlert('Không thể kết nối đến máy chủ.', 'error');
     }
   };
 
@@ -192,11 +213,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (res.ok && data.session?.pin) {
         onLaunchSession(data.session.pin);
       } else {
-        alert(data.message || 'Lỗi khởi chạy phòng.');
+        showAlert(data.message || 'Lỗi khởi chạy phòng.', 'error');
       }
     } catch (error) {
       console.error('Error launching session:', error);
-      alert('Không thể kết nối đến máy chủ.');
+      showAlert('Không thể kết nối đến máy chủ.', 'error');
     }
   };
 
@@ -219,12 +240,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (res.ok) {
         const data = await res.json();
         setPlaylistForm((prev) => ({ ...prev, videoUrl: data.url }));
+        showAlert('Tải lên video thành công!', 'success');
       } else {
-        alert('Tải lên video thất bại.');
+        showAlert('Tải lên video thất bại.', 'error');
       }
     } catch (error) {
       console.error('Error uploading video:', error);
-      alert('Không thể kết nối máy chủ để tải video.');
+      showAlert('Không thể kết nối máy chủ để tải video.', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -285,31 +307,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleDeletePlaylist = async (id: string) => {
-    if (!confirm('Bạn chắc chắn muốn xóa bài học này?')) return;
-    try {
-      const res = await fetch(`${backendUrl}/api/playlists/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+  const handleDeletePlaylist = (id: string) => {
+    showConfirm('Bạn chắc chắn muốn xóa bài học này?', async () => {
+      try {
+        const res = await fetch(`${backendUrl}/api/playlists/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          if (selectedPlaylistId === id) {
+            setSelectedPlaylistId(null);
+          }
+          showAlert('Xóa bài học thành công!', 'success');
+          fetchData();
+        } else {
+          showAlert('Lỗi khi xóa bài học.', 'error');
         }
-      });
-      if (res.ok) {
-        if (selectedPlaylistId === id) {
-          setSelectedPlaylistId(null);
-        }
-        fetchData();
+      } catch (error) {
+        console.error(error);
+        showAlert('Không thể kết nối đến máy chủ.', 'error');
       }
-    } catch (error) {
-      console.error(error);
-    }
+    });
   };
 
   const handleCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${backendUrl}/api/questions`, {
-        method: 'POST',
+      const url = editingQuestionId
+        ? `${backendUrl}/api/questions/${editingQuestionId}`
+        : `${backendUrl}/api/questions`;
+      const method = editingQuestionId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -318,6 +350,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       });
       if (res.ok) {
         setIsQuestionFormOpen(false);
+        setEditingQuestionId(null);
+        showAlert(editingQuestionId ? 'Cập nhật câu hỏi thành công!' : 'Tạo câu hỏi thành công!', 'success');
         fetchData();
         setQuestionForm({
           text: '',
@@ -325,10 +359,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           correctOption: 0,
           explanation: ''
         });
+      } else {
+        showAlert('Không thể lưu câu hỏi.', 'error');
       }
     } catch (error) {
       console.error(error);
+      showAlert('Không thể kết nối đến máy chủ.', 'error');
     }
+  };
+
+  const handleEditQuestionClick = (q: Question) => {
+    setQuestionForm({
+      text: q.text,
+      options: [...q.options],
+      correctOption: q.correctOption,
+      explanation: q.explanation
+    });
+    setEditingQuestionId(q.id);
+    setIsQuestionFormOpen(true);
+  };
+
+  const handleCloseQuestionForm = () => {
+    setIsQuestionFormOpen(false);
+    setEditingQuestionId(null);
+    setQuestionForm({
+      text: '',
+      options: ['', '', '', ''],
+      correctOption: 0,
+      explanation: ''
+    });
   };
 
   const handleExportCSV = () => {
@@ -424,7 +483,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         const rawRows = parseCSV(text);
         if (rawRows.length <= 1) {
-          alert('File CSV trống hoặc không đúng cấu trúc.');
+          showAlert('File CSV trống hoặc không đúng cấu trúc.', 'error');
           return;
         }
 
@@ -457,37 +516,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
 
         if (parsedQuestions.length === 0) {
-          alert('Không tìm thấy câu hỏi hợp lệ nào trong file.');
+          showAlert('Không tìm thấy câu hỏi hợp lệ nào trong file.', 'error');
           return;
         }
 
         const confirmMsg = `Hệ thống tìm thấy ${parsedQuestions.length} câu hỏi hợp lệ từ file Excel/CSV. Bạn có chắc chắn muốn nhập loạt câu hỏi này vào cơ sở dữ liệu?`;
-        if (!window.confirm(confirmMsg)) {
-          return;
-        }
+        showConfirm(confirmMsg, async () => {
+          try {
+            // Send batch request
+            const res = await fetch(`${backendUrl}/api/questions/batch`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(parsedQuestions)
+            });
 
-        // Send batch request
-        const res = await fetch(`${backendUrl}/api/questions/batch`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(parsedQuestions)
+            if (res.ok) {
+              const resData = await res.json();
+              showAlert(resData.message || `Đã nhập thành công ${parsedQuestions.length} câu hỏi vào ngân hàng!`, 'success');
+              fetchData();
+            } else {
+              const errData = await res.json();
+              showAlert(`Lỗi khi nhập câu hỏi: ${errData.message || 'Không xác định'}`, 'error');
+            }
+          } catch (err) {
+            console.error('Error importing CSV:', err);
+            showAlert('Lỗi kết nối khi nhập câu hỏi.', 'error');
+          } finally {
+            // Reset file input value so user can import the same file again
+            e.target.value = '';
+          }
         });
-
-        if (res.ok) {
-          alert(`Đã nhập thành công ${parsedQuestions.length} câu hỏi vào ngân hàng!`);
-          fetchData();
-        } else {
-          const errData = await res.json();
-          alert(`Lỗi khi nhập câu hỏi: ${errData.message || 'Không xác định'}`);
-        }
       } catch (err) {
         console.error('Error importing CSV:', err);
-        alert('Lỗi định dạng file hoặc lỗi đọc file.');
-      } finally {
-        // Reset file input value so user can import the same file again
+        showAlert('Lỗi định dạng file hoặc lỗi đọc file.', 'error');
         e.target.value = '';
       }
     };
@@ -495,19 +559,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
 
-  const handleDeleteQuestion = async (id: string) => {
-    if (!confirm('Bạn chắc chắn muốn xóa câu hỏi này?')) return;
-    try {
-      const res = await fetch(`${backendUrl}/api/questions/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+  const handleDeleteQuestion = (id: string) => {
+    showConfirm('Bạn chắc chắn muốn xóa câu hỏi này?', async () => {
+      try {
+        const res = await fetch(`${backendUrl}/api/questions/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          showAlert('Xóa câu hỏi thành công!', 'success');
+          fetchData();
+        } else {
+          showAlert('Lỗi khi xóa câu hỏi.', 'error');
         }
-      });
-      if (res.ok) fetchData();
-    } catch (error) {
-      console.error(error);
-    }
+      } catch (error) {
+        console.error(error);
+        showAlert('Lỗi kết nối khi xóa câu hỏi.', 'error');
+      }
+    });
   };
 
   const toggleQuestionSelection = (qid: string) => {
@@ -516,7 +587,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setPlaylistForm({ ...playlistForm, questionIds: current.filter(id => id !== qid) });
     } else {
       if (current.length >= 5) {
-        alert('Chỉ chọn tối đa 5 câu hỏi cho một bài học.');
+        showAlert('Chỉ chọn tối đa 5 câu hỏi cho một bài học.', 'info');
         return;
       }
       setPlaylistForm({ ...playlistForm, questionIds: [...current, qid] });
@@ -536,7 +607,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const activePlaylistDiff = activePlaylist ? getDifficulty(activePlaylist.day) : { label: 'HIGH', class: 'diff-hard', value: 3 };
 
   // Filtered playlists based on search query
-  const filteredPlaylists = playlists.filter(p => 
+  const filteredPlaylists = playlists.filter(p =>
     p.title.toLowerCase().includes(playlistSearchQuery.toLowerCase()) ||
     (p.storyText && p.storyText.toLowerCase().includes(playlistSearchQuery.toLowerCase()))
   );
@@ -893,7 +964,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   }}>
                     📚 THƯ VIỆN BÀI GIẢNG ({playlists.length})
                   </span>
-                  
+
                   {(userRole === 'admin' || userRole === 'presenter') && (
                     <button
                       onClick={() => {
@@ -978,7 +1049,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 {/* Scrollable Playlist List */}
-                <div 
+                <div
                   className="custom-scrollbar"
                   style={{
                     flex: 1,
@@ -1707,7 +1778,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             {isQuestionFormOpen && (
               <form onSubmit={handleCreateQuestion} className="glass-panel animate-fade-in" style={{ padding: '24px', marginBottom: '32px', border: '1px solid var(--color-primary-glow)' }}>
-                <h3 style={{ marginBottom: '20px', color: 'var(--color-primary)', fontSize: '1.1rem', textTransform: 'uppercase' }}>TẠO CÂU HỎI TRẮC NGHIỆM MỚI</h3>
+                <h3 style={{ marginBottom: '20px', color: 'var(--color-primary)', fontSize: '1.1rem', textTransform: 'uppercase' }}>
+                  {editingQuestionId ? 'CẬP NHẬT CÂU HỎI TRẮC NGHIỆM' : 'TẠO CÂU HỎI TRẮC NGHIỆM MỚI'}
+                </h3>
 
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Câu hỏi</label>
@@ -1772,7 +1845,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                  <button type="button" className="btn-secondary" onClick={() => setIsQuestionFormOpen(false)}>Hủy</button>
+                  <button type="button" className="btn-secondary" onClick={handleCloseQuestionForm}>Hủy</button>
                   <button type="submit" className="btn-primary">Lưu câu hỏi</button>
                 </div>
               </form>
@@ -1781,10 +1854,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {currentQuestions.map((q) => (
                 <div key={q.id} className="glass-panel" style={{ padding: '20px', border: '1px solid rgba(0, 242, 254, 0.12)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', maxWidth: '90%' }}>{q.text}</h4>
-                    <button onClick={() => handleDeleteQuestion(q.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                      <Trash2 size={14} style={{ color: '#ef4444' }} />
-                    </button>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', maxWidth: '80%' }}>{q.text}</h4>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => handleEditQuestionClick(q)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} title="Chỉnh sửa">
+                        <Edit2 size={14} style={{ color: 'var(--color-primary)' }} />
+                      </button>
+                      <button onClick={() => handleDeleteQuestion(q.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} title="Xóa">
+                        <Trash2 size={14} style={{ color: '#ef4444' }} />
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
@@ -1984,6 +2062,125 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
       </main>
+
+      {/* Custom Alert Modal */}
+      {alertModal.isOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(5, 9, 21, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fade-in 0.2s ease'
+        }}>
+          <div className="glass-panel animate-scale-up" style={{
+            width: '90%',
+            maxWidth: '400px',
+            padding: '24px',
+            border: alertModal.type === 'success' ? '1px solid var(--color-success)' : alertModal.type === 'error' ? '1px solid var(--color-danger)' : '1px solid var(--color-primary)',
+            boxShadow: '0 0 25px rgba(0, 242, 254, 0.1)',
+            textAlign: 'center'
+          }}>
+            <h4 style={{
+              color: alertModal.type === 'success' ? 'var(--color-success)' : alertModal.type === 'error' ? 'var(--color-danger)' : 'var(--color-primary)',
+              fontSize: '1.1rem',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}>
+              {alertModal.type === 'success' ? 'THÀNH CÔNG' : alertModal.type === 'error' ? 'THÔNG BÁO LỖI' : 'THÔNG BÁO'}
+            </h4>
+            <p style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '24px', lineHeight: '1.5' }}>
+              {alertModal.message}
+            </p>
+            <button
+              className="btn-primary"
+              style={{
+                padding: '10px 24px',
+                background: alertModal.type === 'success' ? 'var(--color-success)' : alertModal.type === 'error' ? 'var(--color-danger)' : 'var(--color-primary)',
+                color: '#000',
+                border: 'none',
+                fontWeight: 700,
+                width: '100%'
+              }}
+              onClick={() => setAlertModal({ ...alertModal, isOpen: false })}
+            >
+              ĐỒNG Ý
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirm Modal */}
+      {confirmModal.isOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(5, 9, 21, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fade-in 0.2s ease'
+        }}>
+          <div className="glass-panel animate-scale-up" style={{
+            width: '90%',
+            maxWidth: '400px',
+            padding: '24px',
+            border: '1px solid var(--color-primary)',
+            boxShadow: '0 0 25px rgba(0, 242, 254, 0.1)',
+            textAlign: 'center'
+          }}>
+            <h4 style={{
+              color: 'var(--color-primary)',
+              fontSize: '1.1rem',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              marginBottom: '16px'
+            }}>
+              XÁC NHẬN YÊU CẦU
+            </h4>
+            <p style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '24px', lineHeight: '1.5' }}>
+              {confirmModal.message}
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="btn-secondary"
+                style={{ flex: 1, padding: '10px' }}
+                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+              >
+                HỦY BỎ
+              </button>
+              <button
+                className="btn-primary"
+                style={{ flex: 1, padding: '10px', color: '#000', border: 'none', fontWeight: 700 }}
+                onClick={() => {
+                  if (confirmModal.onConfirm) confirmModal.onConfirm();
+                  setConfirmModal({ ...confirmModal, isOpen: false });
+                }}
+              >
+                ĐỒNG Ý
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
