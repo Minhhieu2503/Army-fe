@@ -178,7 +178,7 @@ export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketRet
 
   // Quiz timer count down in React
   useEffect(() => {
-    if (sessionPhase !== 'quiz' || showQuestionResult || questionTimer <= 0) {
+    if (sessionPhase !== 'quiz' || showQuestionResult || questionTimer <= 0 || !isTimerRunning) {
       if (questionTimer === 0 && !showQuestionResult) {
         setShowQuestionResult(true);
       }
@@ -190,7 +190,7 @@ export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketRet
     }, 1000);
 
     return () => clearInterval(qInterval);
-  }, [sessionPhase, questionTimer, showQuestionResult]);
+  }, [sessionPhase, questionTimer, showQuestionResult, isTimerRunning]);
 
   const handleStart = () => {
     emit('start-session', { pin });
