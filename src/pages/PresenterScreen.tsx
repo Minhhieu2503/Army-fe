@@ -53,7 +53,13 @@ export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketRet
   // Calculate join URL using computer's local IP address
   const protocol = window.location.protocol;
   const port = window.location.port ? `:${window.location.port}` : '';
-  const currentHost = serverIp && serverIp !== 'localhost' ? `${serverIp}${port}` : window.location.host;
+  const isProdDomain = window.location.hostname.includes('vercel.app') || 
+                       (!window.location.hostname.includes('localhost') && 
+                        !window.location.hostname.includes('127.0.0.1') && 
+                        !window.location.hostname.match(/^\d+\.\d+\.\d+\.\d+$/));
+  const currentHost = isProdDomain 
+    ? window.location.host 
+    : (serverIp && serverIp !== 'localhost' ? `${serverIp}${port}` : window.location.host);
   const joinUrl = `${protocol}//${currentHost}/?pin=${pin}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`;
 
