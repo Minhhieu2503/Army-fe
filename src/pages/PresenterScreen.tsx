@@ -347,9 +347,9 @@ export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketRet
               </div>
 
               <div style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
-                ĐƯỜNG DẪN TRỰC TIẾP:
-                <div className="monospace-val" style={{ color: 'var(--color-primary)', fontSize: '1.15rem', marginTop: '8px', letterSpacing: '0.5px' }}>
-                  {joinUrl}
+                MÃ PIN PHÒNG HỌC:
+                <div className="monospace-val" style={{ color: 'var(--color-primary)', fontSize: '2.5rem', fontWeight: 800, marginTop: '8px', letterSpacing: '2px' }}>
+                  {pin}
                 </div>
               </div>
             </div>
