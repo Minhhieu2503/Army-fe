@@ -70,6 +70,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Selected playlist for active view
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playlistSearchQuery, setPlaylistSearchQuery] = useState('');
+  const [playlistCurrentPage, setPlaylistCurrentPage] = useState(1);
 
   // Form States (Quick create/edit)
   const [isPlaylistFormOpen, setIsPlaylistFormOpen] = useState(false);
@@ -540,6 +541,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     (p.storyText && p.storyText.toLowerCase().includes(playlistSearchQuery.toLowerCase()))
   );
 
+  // Pagination for playlists
+  const PLAYLISTS_PER_PAGE = 4;
+  const totalPlaylistPages = Math.ceil(filteredPlaylists.length / PLAYLISTS_PER_PAGE) || 1;
+  const currentPlaylistPageSafe = Math.min(playlistCurrentPage, totalPlaylistPages);
+  const indexOfLastPlaylist = currentPlaylistPageSafe * PLAYLISTS_PER_PAGE;
+  const indexOfFirstPlaylist = indexOfLastPlaylist - PLAYLISTS_PER_PAGE;
+  const paginatedPlaylists = filteredPlaylists.slice(indexOfFirstPlaylist, indexOfLastPlaylist);
+
   // Pagination calculations for Questions tab
   const totalQuestionsPages = Math.ceil(questions.length / 5) || 1;
   const currentQuestionsPageSafe = Math.min(questionsCurrentPage, totalQuestionsPages);
@@ -935,7 +944,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     placeholder="Tìm kiếm bài giảng..."
                     value={playlistSearchQuery}
-                    onChange={(e) => setPlaylistSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setPlaylistSearchQuery(e.target.value);
+                      setPlaylistCurrentPage(1);
+                    }}
                     style={{
                       width: '100%',
                       background: 'rgba(5, 9, 21, 0.6)',
@@ -977,12 +989,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     paddingRight: '4px'
                   }}
                 >
-                  {filteredPlaylists.length === 0 ? (
+                  {paginatedPlaylists.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                       Không tìm thấy bài giảng phù hợp.
                     </div>
                   ) : (
-                    filteredPlaylists.map((pl) => {
+                    paginatedPlaylists.map((pl) => {
                       const isActive = pl.id === activePlaylist?.id;
                       const diff = getDifficulty(pl.day);
                       return (
@@ -1109,6 +1121,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     })
                   )}
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPlaylistPages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: '12px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                    marginTop: 'auto'
+                  }}>
+                    <button
+                      type="button"
+                      disabled={playlistCurrentPage === 1}
+                      onClick={() => setPlaylistCurrentPage(prev => Math.max(prev - 1, 1))}
+                      style={{
+                        background: playlistCurrentPage === 1 ? 'transparent' : 'rgba(0, 242, 254, 0.05)',
+                        border: '1px solid rgba(0, 242, 254, 0.25)',
+                        borderRadius: '4px',
+                        color: playlistCurrentPage === 1 ? 'rgba(255, 255, 255, 0.2)' : 'var(--color-primary)',
+                        padding: '5px 10px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: playlistCurrentPage === 1 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (playlistCurrentPage !== 1) {
+                          e.currentTarget.style.background = 'var(--color-primary)';
+                          e.currentTarget.style.color = '#080d16';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (playlistCurrentPage !== 1) {
+                          e.currentTarget.style.background = 'rgba(0, 242, 254, 0.05)';
+                          e.currentTarget.style.color = 'var(--color-primary)';
+                        }
+                      }}
+                    >
+                      Trước
+                    </button>
+                    <span style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                      Trang <strong style={{ color: '#fff' }}>{playlistCurrentPage}</strong> / {totalPlaylistPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={playlistCurrentPage === totalPlaylistPages}
+                      onClick={() => setPlaylistCurrentPage(prev => Math.min(prev + 1, totalPlaylistPages))}
+                      style={{
+                        background: playlistCurrentPage === totalPlaylistPages ? 'transparent' : 'rgba(0, 242, 254, 0.05)',
+                        border: '1px solid rgba(0, 242, 254, 0.25)',
+                        borderRadius: '4px',
+                        color: playlistCurrentPage === totalPlaylistPages ? 'rgba(255, 255, 255, 0.2)' : 'var(--color-primary)',
+                        padding: '5px 10px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: playlistCurrentPage === totalPlaylistPages ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (playlistCurrentPage !== totalPlaylistPages) {
+                          e.currentTarget.style.background = 'var(--color-primary)';
+                          e.currentTarget.style.color = '#080d16';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (playlistCurrentPage !== totalPlaylistPages) {
+                          e.currentTarget.style.background = 'rgba(0, 242, 254, 0.05)';
+                          e.currentTarget.style.color = 'var(--color-primary)';
+                        }
+                      }}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
