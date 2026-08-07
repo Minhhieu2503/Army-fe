@@ -597,9 +597,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Helper for generating difficulty properties based on lesson day
   const getDifficulty = (day: number) => {
     const d = day % 3;
-    if (d === 1) return { label: 'LOW', class: 'diff-easy', value: 1 };
-    if (d === 2) return { label: 'MEDIUM', class: 'diff-medium', value: 2 };
-    return { label: 'HIGH', class: 'diff-hard', value: 3 };
+    if (d === 1) return { label: 'THẤP', class: 'diff-easy', value: 1 };
+    if (d === 2) return { label: 'TRUNG BÌNH', class: 'diff-medium', value: 2 };
+    return { label: 'CAO', class: 'diff-hard', value: 3 };
   };
 
   // Find currently selected playlist
@@ -1110,7 +1110,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 BÀI #{pl.day}
                               </span>
                               <span style={{
-                                color: diff.label === 'LOW' ? '#10b981' : diff.label === 'MEDIUM' ? '#f59e0b' : '#ef4444',
+                                color: diff.label === 'THẤP' ? '#10b981' : diff.label === 'TRUNG BÌNH' ? '#f59e0b' : '#ef4444',
                                 fontSize: '0.65rem',
                                 fontWeight: 700
                               }}>
