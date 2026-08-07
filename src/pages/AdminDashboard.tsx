@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Plus, Trash2, Edit2, BookOpen, HelpCircle, History, Video, Award, Shield, User, FileText, RefreshCw, Sliders, Settings, Users, Activity, LogOut } from 'lucide-react';
+import { Play, Plus, Trash2, Edit2, BookOpen, HelpCircle, History, Video, Award, Shield, User, FileText, RefreshCw, Sliders, Settings, Users, Activity, LogOut, Search } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -69,6 +69,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Selected playlist for active view
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+  const [playlistSearchQuery, setPlaylistSearchQuery] = useState('');
 
   // Form States (Quick create/edit)
   const [isPlaylistFormOpen, setIsPlaylistFormOpen] = useState(false);
@@ -533,10 +534,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const activePlaylist = playlists.find(p => p.id === selectedPlaylistId) || playlists[0];
   const activePlaylistDiff = activePlaylist ? getDifficulty(activePlaylist.day) : { label: 'HIGH', class: 'diff-hard', value: 3 };
 
-  // Other playlists (queued/archived)
-  const remainingPlaylists = playlists.filter(p => p.id !== (activePlaylist?.id));
-  const queuedPlaylist = remainingPlaylists[0];
-  const archivedPlaylist = remainingPlaylists[1];
+  // Filtered playlists based on search query
+  const filteredPlaylists = playlists.filter(p => 
+    p.title.toLowerCase().includes(playlistSearchQuery.toLowerCase()) ||
+    (p.storyText && p.storyText.toLowerCase().includes(playlistSearchQuery.toLowerCase()))
+  );
 
   // Pagination calculations for Questions tab
   const totalQuestionsPages = Math.ceil(questions.length / 5) || 1;
@@ -860,75 +862,251 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               )}
 
-              {/* Right Column: Queued / Archived stack */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {/* Card 1: QUEUED */}
-                <div className="glass-panel" style={{ padding: '24px', border: '1px solid rgba(255,255,255,0.04)', background: 'rgba(14, 23, 39, 0.4)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <span style={{ background: '#334155', color: '#94a3b8', padding: '3px 8px', fontSize: '0.65rem', fontWeight: 800, borderRadius: '3px' }}>
-                      BÀI TIẾP THEO: NGÀY MAI
-                    </span>
-                    <Award size={16} style={{ color: '#f59e0b' }} />
-                  </div>
-                  {queuedPlaylist ? (
-                    <div onClick={() => setSelectedPlaylistId(queuedPlaylist.id)} style={{ cursor: 'pointer' }}>
-                      <h4 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '8px' }}>{queuedPlaylist.title}</h4>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '16px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {queuedPlaylist.storyText}
-                      </p>
-                      {/* Fake timeline tracker */}
-                      <div className="timeline-track" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        <div className="timeline-fill" style={{ width: '40%', background: '#f59e0b', boxShadow: 'none' }} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <h4 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '8px' }}>Military Orders & Insubordination</h4>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                        Chain of command legalities and consequences of refusing lawful...
-                      </p>
-                      <div className="timeline-track" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        <div className="timeline-fill" style={{ width: '35%', background: '#b45309', boxShadow: 'none' }} />
-                      </div>
-                    </div>
+              {/* Right Column: Lecture Library Panel */}
+              <div className="glass-panel" style={{
+                padding: '24px',
+                border: '1px solid rgba(0, 242, 254, 0.15)',
+                background: 'rgba(10, 18, 30, 0.7)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                height: '520px',
+                overflow: 'hidden'
+              }}>
+                {/* Header of Library */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: '0.85rem',
+                    color: 'var(--color-primary)',
+                    fontWeight: 800,
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase'
+                  }}>
+                    📚 THƯ VIỆN BÀI GIẢNG ({playlists.length})
+                  </span>
+                  
+                  {userRole === 'admin' && (
+                    <button
+                      onClick={() => {
+                        setEditingPlaylistId(null);
+                        setPlaylistForm({
+                          day: playlists.length + 1,
+                          title: '',
+                          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                          storyText: '',
+                          situationTitle: '',
+                          situationText: '',
+                          situationQuestion: '',
+                          questionIds: []
+                        });
+                        setIsPlaylistFormOpen(true);
+                      }}
+                      style={{
+                        background: 'rgba(0, 242, 254, 0.1)',
+                        border: '1px solid rgba(0, 242, 254, 0.3)',
+                        borderRadius: '4px',
+                        color: 'var(--color-primary)',
+                        padding: '6px 12px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--color-primary)';
+                        e.currentTarget.style.color = '#080d16';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 242, 254, 0.1)';
+                        e.currentTarget.style.color = 'var(--color-primary)';
+                      }}
+                    >
+                      <Plus size={14} /> Thêm Mới
+                    </button>
                   )}
                 </div>
 
-                {/* Card 2: ARCHIVED */}
-                <div className="glass-panel" style={{ padding: '24px', border: '1px solid rgba(255,255,255,0.04)', background: 'rgba(14, 23, 39, 0.4)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <span style={{ background: '#334155', color: '#94a3b8', padding: '3px 8px', fontSize: '0.65rem', fontWeight: 800, borderRadius: '3px' }}>
-                      ĐÃ LƯU TRỮ
-                    </span>
-                    <Shield size={16} style={{ color: 'var(--color-success)' }} />
-                  </div>
-                  {archivedPlaylist ? (
-                    <div onClick={() => setSelectedPlaylistId(archivedPlaylist.id)} style={{ cursor: 'pointer' }}>
-                      <h4 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '8px' }}>{archivedPlaylist.title}</h4>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '16px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {archivedPlaylist.storyText}
-                      </p>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <div style={{ width: '20%', height: '4px', background: 'var(--color-success)', borderRadius: '2px' }} />
-                        <div style={{ width: '20%', height: '4px', background: 'var(--color-success)', borderRadius: '2px' }} />
-                        <div style={{ width: '20%', height: '4px', background: 'var(--color-success)', borderRadius: '2px' }} />
-                        <div style={{ width: '20%', height: '4px', background: 'var(--color-success)', borderRadius: '2px' }} />
-                      </div>
+                {/* Search Bar */}
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm bài giảng..."
+                    value={playlistSearchQuery}
+                    onChange={(e) => setPlaylistSearchQuery(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(5, 9, 21, 0.6)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '6px',
+                      padding: '10px 12px 10px 36px',
+                      fontSize: '0.85rem',
+                      color: '#fff',
+                      outline: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--color-primary)';
+                      e.target.style.boxShadow = '0 0 10px rgba(0, 242, 254, 0.2)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  <Search size={16} style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'rgba(255, 255, 255, 0.4)'
+                  }} />
+                </div>
+
+                {/* Scrollable Playlist List */}
+                <div 
+                  className="custom-scrollbar"
+                  style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    paddingRight: '4px'
+                  }}
+                >
+                  {filteredPlaylists.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      Không tìm thấy bài giảng phù hợp.
                     </div>
                   ) : (
-                    <div>
-                      <h4 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '8px' }}>An toàn giao thông hành quân chiến thuật</h4>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                        Quy định giao thông khi vận tải quân sự và tương tác với dân sự...
-                      </p>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <div style={{ width: '20%', height: '4px', background: '#10b981', borderRadius: '2px' }} />
-                        <div style={{ width: '20%', height: '4px', background: '#10b981', borderRadius: '2px' }} />
-                        <div style={{ width: '20%', height: '4px', background: '#10b981', borderRadius: '2px' }} />
-                        <div style={{ width: '20%', height: '4px', background: '#10b981', borderRadius: '2px' }} />
-                        <div style={{ width: '20%', height: '4px', background: '#10b981', borderRadius: '2px' }} />
-                      </div>
-                    </div>
+                    filteredPlaylists.map((pl) => {
+                      const isActive = pl.id === activePlaylist?.id;
+                      const diff = getDifficulty(pl.day);
+                      return (
+                        <div
+                          key={pl.id}
+                          onClick={() => setSelectedPlaylistId(pl.id)}
+                          style={{
+                            background: isActive ? 'rgba(0, 242, 254, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                            border: isActive ? '1px solid rgba(0, 242, 254, 0.6)' : '1px solid rgba(255, 255, 255, 0.05)',
+                            borderRadius: '8px',
+                            padding: '14px 16px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'all 0.25s ease',
+                            boxShadow: isActive ? '0 0 15px rgba(0, 242, 254, 0.15)' : 'none'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                            }
+                          }}
+                        >
+                          <div style={{ flex: 1, marginRight: '16px', overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                              <span style={{
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontSize: '0.65rem',
+                                fontWeight: 700
+                              }}>
+                                BÀI #{pl.day}
+                              </span>
+                              <span style={{
+                                color: diff.label === 'LOW' ? '#10b981' : diff.label === 'MEDIUM' ? '#f59e0b' : '#ef4444',
+                                fontSize: '0.65rem',
+                                fontWeight: 700
+                              }}>
+                                • {diff.label}
+                              </span>
+                            </div>
+                            <h4 style={{
+                              fontSize: '0.95rem',
+                              fontWeight: 700,
+                              color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.85)',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {pl.title}
+                            </h4>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
+                            {userRole === 'admin' && (
+                              <>
+                                <button
+                                  onClick={() => handleEditPlaylist(pl)}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'rgba(255, 255, 255, 0.4)',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                                    e.currentTarget.style.color = 'var(--color-primary)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.4)';
+                                  }}
+                                  title="Chỉnh sửa bài giảng"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePlaylist(pl.id)}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'rgba(255, 255, 255, 0.4)',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                    e.currentTarget.style.color = '#ef4444';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.4)';
+                                  }}
+                                  title="Xóa bài giảng"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
