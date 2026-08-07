@@ -1200,191 +1200,215 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
-            {/* PLAYLIST FORMS MODAL / EXPANDABLE (for admins) */}
+            {/* PLAYLIST EDIT MODAL - Full screen overlay */}
             {isPlaylistFormOpen && (
-              <form onSubmit={handleCreatePlaylist} className="glass-panel animate-fade-in" style={{ padding: '24px', border: '1px solid var(--color-primary-glow)' }}>
-                <h3 style={{ marginBottom: '20px', color: 'var(--color-primary)', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {editingPlaylistId ? 'CHỈNH SỬA HỒ SƠ BÀI HỌC' : 'THIẾT LẬP BÀI HỌC MỚI'}
-                </h3>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', marginBottom: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ngày số (Day)</label>
-                    <input
-                      type="number"
-                      required
-                      className="input-field monospace-val"
-                      value={playlistForm.day || ''}
-                      onChange={(e) => setPlaylistForm({ ...playlistForm, day: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Tiêu đề bài học</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Tiêu đề bài học..."
-                      className="input-field"
-                      value={playlistForm.title || ''}
-                      onChange={(e) => setPlaylistForm({ ...playlistForm, title: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nguồn Video</label>
-                  <div style={{ display: 'flex', gap: '20px', marginBottom: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer', color: '#fff' }}>
-                      <input
-                        type="radio"
-                        name="videoSourceType"
-                        checked={videoSourceType === 'youtube'}
-                        onChange={() => {
-                          setVideoSourceType('youtube');
-                          setPlaylistForm(prev => ({ ...prev, videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }));
-                        }}
-                      />
-                      YouTube Link
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer', color: '#fff' }}>
-                      <input
-                        type="radio"
-                        name="videoSourceType"
-                        checked={videoSourceType === 'upload'}
-                        onChange={() => {
-                          setVideoSourceType('upload');
-                          setPlaylistForm(prev => ({ ...prev, videoUrl: '' }));
-                        }}
-                      />
-                      Tải lên file video (.mp4)
-                    </label>
+              <div
+                style={{
+                  position: 'fixed', inset: 0, zIndex: 9999,
+                  background: 'rgba(0,0,0,0.75)',
+                  backdropFilter: 'blur(6px)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '20px'
+                }}
+                onClick={(e) => { if (e.target === e.currentTarget) handleClosePlaylistForm(); }}
+              >
+                <form
+                  onSubmit={handleCreatePlaylist}
+                  style={{
+                    background: '#0a1120',
+                    border: '1px solid rgba(0,242,254,0.3)',
+                    borderRadius: '12px',
+                    width: '100%', maxWidth: '780px',
+                    maxHeight: '90vh',
+                    display: 'flex', flexDirection: 'column',
+                    boxShadow: '0 0 60px rgba(0,242,254,0.15)'
+                  }}
+                >
+                  {/* Modal Header */}
+                  <div style={{
+                    padding: '20px 28px',
+                    borderBottom: '1px solid rgba(0,242,254,0.1)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    flexShrink: 0
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '4px', height: '24px', background: 'var(--color-primary)', borderRadius: '2px' }} />
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                        {editingPlaylistId ? '✏️ Chỉnh sửa bài giảng' : '➕ Tạo bài giảng mới'}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClosePlaylistForm}
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#94a3b8', width: '32px', height: '32px', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >✕</button>
                   </div>
 
-                  {videoSourceType === 'youtube' ? (
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ví dụ: https://www.youtube.com/embed/..."
-                      className="input-field"
-                      value={playlistForm.videoUrl || ''}
-                      onChange={(e) => setPlaylistForm({ ...playlistForm, videoUrl: e.target.value })}
-                    />
-                  ) : (
-                    <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start', border: '1px dashed rgba(0, 242, 254, 0.3)' }}>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        style={{ display: 'none' }}
-                        id="local-video-file"
-                        onChange={handleVideoUpload}
-                      />
-                      <label
-                        htmlFor="local-video-file"
-                        className="btn-secondary"
-                        style={{ cursor: 'pointer', display: 'inline-flex', padding: '8px 16px', fontSize: '0.85rem' }}
-                      >
-                        Chọn tệp video MP4
-                      </label>
-                      {isUploading && <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>Đang xử lý tải lên...</span>}
-                      {playlistForm.videoUrl && !isUploading && (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--color-success)', wordBreak: 'break-all' }}>
-                          Đã tải file lên: <strong>{playlistForm.videoUrl}</strong>
-                        </span>
+                  {/* Modal Body - Scrollable */}
+                  <div style={{ overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                    {/* Row 1: Day + Title */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '16px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ngày số</label>
+                        <input
+                          type="number" required className="input-field monospace-val"
+                          value={playlistForm.day || ''}
+                          onChange={(e) => setPlaylistForm({ ...playlistForm, day: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tiêu đề bài giảng</label>
+                        <input
+                          type="text" required placeholder="VD: Luật Nghĩa vụ quân sự 2015" className="input-field"
+                          value={playlistForm.title || ''}
+                          onChange={(e) => setPlaylistForm({ ...playlistForm, title: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 2: Video Source */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nguồn video</label>
+                      <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
+                        {(['youtube', 'upload'] as const).map(type => (
+                          <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer', color: videoSourceType === type ? 'var(--color-primary)' : '#94a3b8' }}>
+                            <input
+                              type="radio" name="videoSourceType"
+                              checked={videoSourceType === type}
+                              onChange={() => {
+                                setVideoSourceType(type);
+                                if (type === 'youtube') setPlaylistForm(p => ({ ...p, videoUrl: 'https://www.youtube.com/embed/' }));
+                                else setPlaylistForm(p => ({ ...p, videoUrl: '' }));
+                              }}
+                            />
+                            {type === 'youtube' ? '🎬 YouTube Link' : '📁 Upload file MP4'}
+                          </label>
+                        ))}
+                      </div>
+                      {videoSourceType === 'youtube' ? (
+                        <input
+                          type="text" required placeholder="https://www.youtube.com/embed/..." className="input-field"
+                          value={playlistForm.videoUrl || ''}
+                          onChange={(e) => setPlaylistForm({ ...playlistForm, videoUrl: e.target.value })}
+                        />
+                      ) : (
+                        <div style={{ padding: '14px', border: '1px dashed rgba(0,242,254,0.3)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                          <input type="file" accept="video/*" style={{ display: 'none' }} id="modal-video-file" onChange={handleVideoUpload} />
+                          <label htmlFor="modal-video-file" className="btn-secondary" style={{ cursor: 'pointer', padding: '7px 14px', fontSize: '0.82rem', flexShrink: 0 }}>
+                            Chọn tệp MP4
+                          </label>
+                          <span style={{ fontSize: '0.8rem', color: isUploading ? 'var(--color-primary)' : playlistForm.videoUrl ? 'var(--color-success)' : '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {isUploading ? 'Đang tải lên...' : playlistForm.videoUrl ? playlistForm.videoUrl : 'Chưa chọn file'}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
 
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Câu chuyện Bác Hồ / Lời kể chuyện dẫn nhập</label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Nội dung lời kể dẫn nhập câu chuyện pháp lý..."
-                    className="input-field"
-                    style={{ resize: 'vertical' }}
-                    value={playlistForm.storyText || ''}
-                    onChange={(e) => setPlaylistForm({ ...playlistForm, storyText: e.target.value })}
-                  />
-                </div>
+                    {/* Row 3: Story Text */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Lời kể chuyện dẫn nhập (Câu chuyện Bác Hồ)</label>
+                      <textarea
+                        required rows={3} placeholder="Nội dung lời kể dẫn nhập câu chuyện pháp lý..." className="input-field"
+                        style={{ resize: 'vertical' }}
+                        value={playlistForm.storyText || ''}
+                        onChange={(e) => setPlaylistForm({ ...playlistForm, storyText: e.target.value })}
+                      />
+                    </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Tiêu đề tình huống</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Tiêu đề tình huống..."
-                      className="input-field"
-                      value={playlistForm.situationTitle || ''}
-                      onChange={(e) => setPlaylistForm({ ...playlistForm, situationTitle: e.target.value })}
-                    />
+                    {/* Row 4: Situation Title + Question */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tiêu đề tình huống</label>
+                        <input
+                          type="text" required placeholder="VD: Tình huống trốn tránh NVQS" className="input-field"
+                          value={playlistForm.situationTitle || ''}
+                          onChange={(e) => setPlaylistForm({ ...playlistForm, situationTitle: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Câu hỏi suy ngẫm</label>
+                        <input
+                          type="text" required placeholder="Câu hỏi thảo luận pháp lý..." className="input-field"
+                          value={playlistForm.situationQuestion || ''}
+                          onChange={(e) => setPlaylistForm({ ...playlistForm, situationQuestion: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 5: Situation Text */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chi tiết nội dung tình huống</label>
+                      <textarea
+                        required rows={3} placeholder="Tóm tắt tình huống pháp lý xảy ra..." className="input-field"
+                        style={{ resize: 'vertical' }}
+                        value={playlistForm.situationText || ''}
+                        onChange={(e) => setPlaylistForm({ ...playlistForm, situationText: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Row 6: Question selector */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Chọn câu hỏi trắc nghiệm &nbsp;
+                        <span style={{ color: (playlistForm.questionIds?.length || 0) === 5 ? 'var(--color-success)' : 'var(--color-primary)' }}>
+                          ({playlistForm.questionIds?.length || 0}/5 đã chọn)
+                        </span>
+                      </label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxHeight: '180px', overflowY: 'auto', padding: '10px', border: '1px solid rgba(0,242,254,0.1)', borderRadius: '8px', background: 'rgba(5,9,21,0.5)' }}>
+                        {questions.map((q) => {
+                          const isSelected = playlistForm.questionIds?.includes(q.id);
+                          return (
+                            <div
+                              key={q.id}
+                              onClick={() => toggleQuestionSelection(q.id)}
+                              style={{
+                                padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem',
+                                border: isSelected ? '1px solid var(--color-primary)' : '1px solid rgba(255,255,255,0.05)',
+                                background: isSelected ? 'rgba(0,242,254,0.08)' : 'rgba(255,255,255,0.01)',
+                                color: isSelected ? '#fff' : 'var(--text-secondary)',
+                                transition: 'all 0.15s',
+                                display: 'flex', gap: '6px', alignItems: 'flex-start'
+                              }}
+                            >
+                              <span style={{ color: isSelected ? 'var(--color-primary)' : '#475569', flexShrink: 0, marginTop: '1px' }}>{isSelected ? '✓' : '○'}</span>
+                              <span style={{ lineHeight: '1.4' }}>{q.text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                   </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Câu hỏi suy ngẫm</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Nội dung câu hỏi thảo luận..."
-                      className="input-field"
-                      value={playlistForm.situationQuestion || ''}
-                      onChange={(e) => setPlaylistForm({ ...playlistForm, situationQuestion: e.target.value })}
-                    />
+
+                  {/* Modal Footer - Sticky */}
+                  <div style={{
+                    padding: '16px 28px',
+                    borderTop: '1px solid rgba(0,242,254,0.1)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    flexShrink: 0
+                  }}>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                      {(playlistForm.questionIds?.length || 0) < 5 ? `⚠️ Cần chọn đủ 5 câu hỏi (còn thiếu ${5 - (playlistForm.questionIds?.length || 0)})` : '✅ Đã đủ 5 câu hỏi'}
+                    </span>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button type="button" className="btn-secondary" onClick={handleClosePlaylistForm} style={{ padding: '10px 20px' }}>
+                        Hủy bỏ
+                      </button>
+                      <button
+                        type="submit" className="btn-primary"
+                        disabled={(playlistForm.questionIds?.length || 0) !== 5}
+                        style={{ padding: '10px 24px', opacity: (playlistForm.questionIds?.length || 0) === 5 ? 1 : 0.5 }}
+                      >
+                        {editingPlaylistId ? '💾 Lưu thay đổi' : '➕ Tạo bài giảng'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Chi tiết nội dung tình huống</label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Tóm tắt tình huống pháp lý xảy ra..."
-                    className="input-field"
-                    style={{ resize: 'vertical' }}
-                    value={playlistForm.situationText || ''}
-                    onChange={(e) => setPlaylistForm({ ...playlistForm, situationText: e.target.value })}
-                  />
-                </div>
-
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
-                    Chọn 5 câu hỏi trắc nghiệm ({playlistForm.questionIds?.length || 0}/5 đã chọn)
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', maxHeight: '200px', overflowY: 'auto', padding: '10px', border: '1px solid rgba(0, 242, 254, 0.1)', borderRadius: '8px', background: 'rgba(5, 9, 21, 0.4)' }}>
-                    {questions.map((q) => {
-                      const isSelected = playlistForm.questionIds?.includes(q.id);
-                      return (
-                        <div
-                          key={q.id}
-                          onClick={() => toggleQuestionSelection(q.id)}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: '6px',
-                            border: isSelected ? '1px solid var(--color-primary)' : '1px solid transparent',
-                            background: isSelected ? 'rgba(0, 242, 254, 0.08)' : 'rgba(255,255,255,0.01)',
-                            cursor: 'pointer',
-                            fontSize: '0.8rem',
-                            color: isSelected ? '#fff' : 'var(--text-secondary)',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          <strong>Q:</strong> {q.text}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                  <button type="button" className="btn-secondary" onClick={handleClosePlaylistForm}>Hủy</button>
-                  <button type="submit" className="btn-primary" disabled={(playlistForm.questionIds?.length || 0) !== 5}>
-                    Lưu bài học
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             )}
 
-            {/* BOTTOM AREA: Cyber Security Question Matrix (Screenshot 1 matching table) */}
+            {/* BOTTOM AREA: Cyber Security Question Matrix */}
             <div className="glass-panel" style={{ padding: '28px', border: '1px solid rgba(0, 242, 254, 0.12)' }}>
 
               {/* Table Header Controls */}
