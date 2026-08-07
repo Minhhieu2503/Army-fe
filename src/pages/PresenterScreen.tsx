@@ -397,15 +397,17 @@ export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketRet
 
         {/* PHASE 1: VIDEO */}
         {sessionPhase === 'video' && (() => {
-          const isLocalVideo = videoUrl ? videoUrl.startsWith('/uploads/') : false;
-          const resolvedVideoUrl = isLocalVideo ? `${backendUrl}${videoUrl}` : videoUrl;
+          const isVideoFile = videoUrl 
+            ? (videoUrl.startsWith('/uploads/') || videoUrl.includes('cloudinary.com') || videoUrl.includes('res.cloudinary'))
+            : false;
+          const resolvedVideoUrl = videoUrl.startsWith('/uploads/') ? `${backendUrl}${videoUrl}` : videoUrl;
 
           return (
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '32px', height: '520px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
               {/* Video Box */}
               <div className="glass-panel" style={{ padding: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#050915', border: '1px solid rgba(0, 242, 254, 0.2)' }}>
                 {videoUrl ? (
-                  isLocalVideo ? (
+                  isVideoFile ? (
                     <video
                       src={resolvedVideoUrl}
                       controls
