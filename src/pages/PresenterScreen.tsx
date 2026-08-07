@@ -6,6 +6,7 @@ interface PresenterScreenProps {
   pin: string;
   socketReturn: UseSocketReturn;
   onExit: () => void;
+  backendUrl: string;
 }
 
 interface Student {
@@ -14,7 +15,7 @@ interface Student {
   classCode: string;
 }
 
-export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketReturn, onExit }) => {
+export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketReturn, onExit, backendUrl }) => {
   const { on, off, emit } = socketReturn;
 
   // Sync state
@@ -390,8 +391,6 @@ export const PresenterScreen: React.FC<PresenterScreenProps> = ({ pin, socketRet
 
         {/* PHASE 1: VIDEO */}
         {sessionPhase === 'video' && (() => {
-          const backendHost = window.location.hostname;
-          const backendUrl = `http://${backendHost}:5000`;
           const isLocalVideo = videoUrl ? videoUrl.startsWith('/uploads/') : false;
           const resolvedVideoUrl = isLocalVideo ? `${backendUrl}${videoUrl}` : videoUrl;
 

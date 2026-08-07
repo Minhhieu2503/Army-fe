@@ -132,6 +132,7 @@ function App() {
           pin={activePin} 
           socketReturn={socketReturn} 
           onExit={handleExitToAdmin} 
+          backendUrl={backendUrl}
         />
       )}
 
