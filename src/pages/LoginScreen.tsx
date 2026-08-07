@@ -33,7 +33,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onStud
         } else {
           setSavedUser(parsed);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }, []);
 
@@ -106,7 +106,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onStud
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setSavedUser(data.user);
-      
+
       setTimeout(() => {
         onLoginSuccess(data.token, data.user);
       }, 1000);
@@ -160,7 +160,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onStud
 
     try {
       const endpoint = presenterMode === 'register' ? 'register' : 'login';
-      const bodyPayload = presenterMode === 'register' 
+      const bodyPayload = presenterMode === 'register'
         ? { username: username.trim(), password, email: email.trim() }
         : { username: username.trim(), password };
 
@@ -179,7 +179,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onStud
       }
 
       if (data.user && data.user.role === 'student') {
-        throw new Error(presenterMode === 'register' 
+        throw new Error(presenterMode === 'register'
           ? 'Đăng ký thành công! Tài khoản của bạn hiện có vai trò Học Viên. Vui lòng liên hệ cán bộ quản lý để kích hoạt quyền Giảng Viên.'
           : 'Tài khoản của bạn hiện là Học Viên và chưa được kích hoạt quyền Giảng Viên. Vui lòng liên hệ cán bộ quản lý để nâng cấp.');
       }
@@ -244,7 +244,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onStud
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
           <ShieldCheck size={38} style={{ color: 'var(--color-primary, #22c55e)' }} />
           <h1 style={{ fontSize: '2.4rem', fontWeight: 800, margin: 0, letterSpacing: '2px', textShadow: '0 0 10px rgba(34, 197, 94, 0.5)' }}>
-            PHÁP LUẬT 3 PHÚT
+            MỖI NGÀY MỘT LỜI BÁC HỒ DẠY
           </h1>
         </div>
         <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.95rem', letterSpacing: '1px' }}>
@@ -253,7 +253,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onStud
       </div>
 
       {/* Auth Glassmorphism Card */}
-      <div 
+      <div
         className="glass-panel"
         style={{
           width: '100%',
@@ -692,12 +692,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onStud
       </div>
 
       {/* Footer Info */}
-      <div style={{ 
-        marginTop: '32px', 
-        fontSize: '0.75rem', 
-        color: 'rgba(255, 255, 255, 0.4)', 
-        display: 'flex', 
-        alignItems: 'center', 
+      <div style={{
+        marginTop: '32px',
+        fontSize: '0.75rem',
+        color: 'rgba(255, 255, 255, 0.4)',
+        display: 'flex',
+        alignItems: 'center',
         gap: '6px',
         zIndex: 1
       }}>
