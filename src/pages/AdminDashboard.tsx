@@ -854,7 +854,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     >
                       🚀 KÍCH HOẠT PHÒNG HỌC 1-CLICK
                     </button>
-                    {userRole === 'admin' && (
+                    {(userRole === 'admin' || userRole === 'presenter') && (
                       <button
                         className="btn-secondary"
                         onClick={() => handleEditPlaylist(activePlaylist)}
@@ -894,7 +894,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     📚 THƯ VIỆN BÀI GIẢNG ({playlists.length})
                   </span>
                   
-                  {userRole === 'admin' && (
+                  {(userRole === 'admin' || userRole === 'presenter') && (
                     <button
                       onClick={() => {
                         setEditingPlaylistId(null);
@@ -1059,7 +1059,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-                            {userRole === 'admin' && (
+                            {(userRole === 'admin' || userRole === 'presenter') && (
                               <>
                                 <button
                                   onClick={() => handleEditPlaylist(pl)}
