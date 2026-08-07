@@ -16,7 +16,7 @@ export const useSocket = () => {
       ? envApiUrl 
       : (hostname === 'localhost' || hostname === '127.0.0.1'
         ? `${protocol}//localhost:5000`
-        : `${protocol}//${hostname}:5000`);
+        : 'https://army-be.onrender.com');
 
     console.log(`Connecting socket to: ${backendUrl}`);
     const socket = io(backendUrl, {
